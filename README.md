@@ -1,36 +1,71 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# CourseMaster
 
-## Getting Started
+A production-ready EdTech platform where students can master new skills and instructors can manage their courses.
 
-First, run the development server:
+![Hero Banner](./public/assets/hero.png)
 
+## 🚀 Tech Stack
+
+- **Frontend**: Next.js 16 (App Router), Tailwind CSS, Shadcn UI, Framer Motion, Sonner, Recharts.
+- **Backend**: Node.js, Express, MongoDB (Mongoose).
+- **Authentication**: JWT-based auth with HttpOnly cookies (simulated via local storage for this demo).
+- **Validation**: Zod.
+
+## 🛠️ Setup & Installation
+
+### Prerequisites
+- Node.js (v18+)
+- MongoDB (Local or Atlas)
+
+### 1. Clone the Repository
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/ana-yet/course-master-client.git client
+git clone https://github.com/ana-yet/course-master-server.git server
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Backend Setup
+```bash
+cd server
+npm install
+```
+Create a `.env` file in the `server` directory:
+```env
+MONGO_URI=mongodb://localhost:27017/coursemaster
+PORT=5000
+JWT_SECRET=your_super_secret_key
+JWT_EXPIRES_IN=90d
+```
+Start the server:
+```bash
+node server.js
+```
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+### 3. Frontend Setup
+```bash
+cd client
+npm install
+```
+Create a `.env.local` file in the `client` directory:
+```env
+NEXT_PUBLIC_API_URL=http://localhost:5000/api/v1
+```
+Start the client:
+```bash
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🔑 Key Features
 
-## Learn More
+- **Course Management**: Admin can Create, Read, Update, and Delete courses.
+- **Enrollment System**: Students can enroll in courses and track their progress.
+- **Dashboard**:
+  - **Student**: View enrolled courses and progress bars.
+  - **Admin**: Manage courses and view enrollment analytics (Bar Chart).
+- **Search & Filter**: Real-time search and filtering on the home page.
+- **Responsive Design**: Fully optimized for mobile and desktop.
 
-To learn more about Next.js, take a look at the following resources:
+## 🤖 AI Assets
+All visual assets (Logo, Hero Banner) were generated using **Nano Banana** (Google's Gemini 3 Pro Image Model).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 📝 License
+MIT
