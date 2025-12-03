@@ -2,6 +2,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "@/context/AuthContext";
+import Navbar from "@/components/shared/Navbar";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -19,6 +20,7 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body className={`${inter.variable} antialiased`}>
         <AuthProvider>
+          <Navbar />
           <main className="min-h-screen">{children}</main>
 
           {/* react hot toast */}
