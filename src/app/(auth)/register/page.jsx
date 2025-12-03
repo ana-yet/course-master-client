@@ -2,17 +2,39 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
+import { authService } from "@/services/auth.service";
 
 export default function RegisterPage() {
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+  });
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.id]: e.target.value });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    // TODO: Connect to Backend API
-    setTimeout(() => setIsLoading(false), 2000);
+
+    try {
+      const response = await authService.register(formData);
+      toast.success("Account created! Please log in.");
+      router.push("/login");
+    } catch (error) {
+      const message = error.response?.data?.message || "Registration failed";
+      toast.error(message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -22,13 +44,22 @@ export default function RegisterPage() {
       </h3>
 
       <form onSubmit={handleSubmit} className="space-y-5">
-        <Input id="name" label="Full Name" placeholder="John Doe" required />
+        <Input
+          id="name"
+          label="Full Name"
+          placeholder="John Doe"
+          value={formData.name}
+          onChange={handleChange}
+          required
+        />
 
         <Input
           id="email"
           label="Email Address"
           type="email"
           placeholder="name@example.com"
+          value={formData.email}
+          onChange={handleChange}
           required
         />
 
@@ -37,6 +68,8 @@ export default function RegisterPage() {
           label="Password"
           type="password"
           placeholder="••••••••"
+          value={formData.password}
+          onChange={handleChange}
           required
         />
 
