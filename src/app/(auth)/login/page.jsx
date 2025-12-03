@@ -6,34 +6,25 @@ import { useRouter } from "next/navigation"; // For redirection
 import toast from "react-hot-toast"; // For alerts
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
-import { authService } from "@/services/auth.service";
+import { useAuth } from "@/context/AuthContext";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
-
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.id]: e.target.value });
-  };
+  const [formData, setFormData] = useState({ email: "", password: "" });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const response = await authService.login(formData);
-      console.log({ response });
+      // login api call
+      await login(formData);
 
-      // Success
-      toast.success(response.message || "Logged in successfully!");
-
-      router.push("/"); // Redirect to Home
+      toast.success("Welcome back!");
+      router.push("/");
     } catch (error) {
-      // Extract error message from Backend "ApiError" response
       const message = error.response?.data?.message || "Login failed";
       toast.error(message);
     } finally {
@@ -54,7 +45,7 @@ export default function LoginPage() {
           type="email"
           placeholder="name@example.com"
           value={formData.email}
-          onChange={handleChange}
+          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
           required
         />
 
@@ -64,7 +55,9 @@ export default function LoginPage() {
           type="password"
           placeholder="••••••••"
           value={formData.password}
-          onChange={handleChange}
+          onChange={(e) =>
+            setFormData({ ...formData, password: e.target.value })
+          }
           required
         />
 
