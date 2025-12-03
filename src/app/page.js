@@ -28,7 +28,7 @@ export default function Home() {
     try {
       const res = await api.get('/courses');
       setCourses(res.data.data.courses);
-      setFiltered Courses(res.data.data.courses);
+      setFilteredCourses(res.data.data.courses);
       setLoading(false);
     } catch (error) {
       console.error('Failed to fetch courses:', error);
