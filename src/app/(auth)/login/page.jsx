@@ -2,17 +2,43 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation"; // For redirection
+import toast from "react-hot-toast"; // For alerts
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
+import { authService } from "@/services/auth.service";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.id]: e.target.value });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    // TODO: Connect to Backend API here
-    setTimeout(() => setIsLoading(false), 2000); // Simulate API
+
+    try {
+      const response = await authService.login(formData);
+      console.log({ response });
+
+      // Success
+      toast.success(response.message || "Logged in successfully!");
+
+      router.push("/"); // Redirect to Home
+    } catch (error) {
+      // Extract error message from Backend "ApiError" response
+      const message = error.response?.data?.message || "Login failed";
+      toast.error(message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -27,6 +53,8 @@ export default function LoginPage() {
           label="Email Address"
           type="email"
           placeholder="name@example.com"
+          value={formData.email}
+          onChange={handleChange}
           required
         />
 
@@ -35,6 +63,8 @@ export default function LoginPage() {
           label="Password"
           type="password"
           placeholder="••••••••"
+          value={formData.password}
+          onChange={handleChange}
           required
         />
 

@@ -16,29 +16,31 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} antialiased`}>{children}</body>
+      <body className={`${inter.variable} antialiased`}>
+        {children}
 
-      {/* react hot toast */}
-      <Toaster
-        position="top-center"
-        toastOptions={{
-          duration: 4000,
-          style: {
-            background: "#333",
-            color: "#fff",
-          },
-          success: {
+        {/* react hot toast */}
+        <Toaster
+          position="top-center"
+          toastOptions={{
+            duration: 4000,
             style: {
-              background: "#10b981", // Emerald-500
+              background: "#333",
+              color: "#fff",
             },
-          },
-          error: {
-            style: {
-              background: "#e11d48", // Rose-600
+            success: {
+              style: {
+                background: "#10b981", // Emerald-500
+              },
             },
-          },
-        }}
-      />
+            error: {
+              style: {
+                background: "#e11d48", // Rose-600
+              },
+            },
+          }}
+        />
+      </body>
     </html>
   );
 }
