@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus, Edit, Trash2, Eye } from "lucide-react";
+import { Plus, Edit, Trash2, Eye, Users } from "lucide-react";
 import Button from "@/components/ui/Button";
 import api from "@/lib/axios";
 import toast from "react-hot-toast";
@@ -129,6 +129,11 @@ export default function AdminCoursesPage() {
                       <Link href={`/courses/${course._id}`}>
                         <Button variant="ghost" size="sm">
                           <Eye className="h-4 w-4" />
+                        </Button>
+                      </Link>
+                      <Link href={`/admin/courses/${course._id}/enrollments`}>
+                        <Button variant="ghost" size="sm" title="View Enrollments">
+                          <Users className="h-4 w-4" />
                         </Button>
                       </Link>
                       <Link href={`/admin/courses/${course._id}/edit`}>
