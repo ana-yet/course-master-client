@@ -8,7 +8,6 @@ import {
   CheckCircle,
   Circle,
   PlayCircle,
-  Lock,
   ChevronDown,
   ChevronUp,
   FileQuestion,
@@ -17,8 +16,13 @@ import {
   AlertCircle,
   Trophy,
   Send,
-  BookOpen,
   ArrowRight,
+  ArrowLeft,
+  BookOpen,
+  Clock,
+  Target,
+  X,
+  Menu,
 } from "lucide-react";
 import Button from "@/components/ui/Button";
 import toast from "react-hot-toast";
@@ -41,6 +45,9 @@ export default function LearnPage() {
   // View mode: 'video', 'quiz', 'assignment'
   const [viewMode, setViewMode] = useState("video");
 
+  // Mobile sidebar
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   // Quiz state
   const [quizAnswers, setQuizAnswers] = useState({});
   const [quizSubmitting, setQuizSubmitting] = useState(false);
@@ -56,7 +63,6 @@ export default function LearnPage() {
       setLoading(true);
       setError(null);
 
-      // Fetch course and enrollment in parallel
       const [courseRes, enrollRes] = await Promise.all([
         courseService.getCourseById(courseId),
         api.get(`/enrollments/details/${courseId}`),
@@ -65,7 +71,6 @@ export default function LearnPage() {
       setCourse(courseRes.data);
       setEnrollment(enrollRes.data.data);
 
-      // Set initial module
       if (courseRes.data.milestones?.length > 0) {
         const firstMilestone = courseRes.data.milestones[0];
         if (firstMilestone.modules?.length > 0) {
@@ -107,6 +112,7 @@ export default function LearnPage() {
     setViewMode("video");
     setQuizResult(null);
     setQuizAnswers({});
+    setSidebarOpen(false);
   };
 
   // Check if module is completed
@@ -139,14 +145,13 @@ export default function LearnPage() {
       });
 
       setEnrollment(res.data.data);
-      toast.success("Module Completed!");
+      toast.success("Module Completed! 🎉");
 
       // Auto-advance to next module
       const currentMilestone = course.milestones[activeModule.milestone];
       if (activeModule.module < currentMilestone.modules.length - 1) {
         selectModule(activeModule.milestone, activeModule.module + 1);
       } else if (activeModule.milestone < course.milestones.length - 1) {
-        // Move to next milestone's first module
         const nextMilestone = course.milestones[activeModule.milestone + 1];
         if (nextMilestone.modules?.length > 0) {
           setExpandedMilestones((prev) => [...prev, activeModule.milestone + 1]);
@@ -242,10 +247,10 @@ export default function LearnPage() {
   // Loading state
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-[calc(100vh-100px)]">
+      <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
-          <Loader2 className="w-10 h-10 animate-spin text-primary-600 mx-auto mb-4" />
-          <p className="text-slate-500">Loading course content...</p>
+          <Loader2 className="w-12 h-12 animate-spin text-primary-600 mx-auto mb-4" />
+          <p className="text-slate-500 font-medium">Loading your course...</p>
         </div>
       </div>
     );
@@ -254,16 +259,17 @@ export default function LearnPage() {
   // Error state
   if (error) {
     return (
-      <div className="flex items-center justify-center h-[calc(100vh-100px)]">
-        <div className="text-center max-w-md">
-          <AlertCircle className="w-12 h-12 text-rose-500 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-slate-900 mb-2">
-            Failed to Load Course
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center max-w-md px-4">
+          <AlertCircle className="w-16 h-16 text-rose-400 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-slate-900 mb-2">
+            Oops! Something went wrong
           </h2>
           <p className="text-slate-500 mb-6">{error}</p>
-          <div className="flex gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button variant="outline" onClick={() => router.push("/dashboard")}>
-              Go to Dashboard
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Dashboard
             </Button>
             <Button onClick={loadData}>Try Again</Button>
           </div>
@@ -279,459 +285,601 @@ export default function LearnPage() {
   const moduleHasQuiz = moduleQuiz?.questions?.length > 0;
   const milestoneAssignment = currentMilestone?.assignment;
 
+  // Calculate stats
+  const totalModules = course.milestones?.reduce(
+    (acc, m) => acc + (m.modules?.length || 0),
+    0
+  );
+  const completedCount = enrollment?.completedModules?.length || 0;
+
   return (
-    <div className="flex flex-col lg:flex-row h-[calc(100vh-80px)] gap-4 overflow-hidden">
-      {/* Left: Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Video Player / Quiz / Assignment */}
-        <div className="flex-1 overflow-y-auto">
-          {viewMode === "video" && (
-            <div className="space-y-4">
-              {/* Video */}
-              <div className="aspect-video w-full bg-black rounded-xl overflow-hidden shadow-lg">
-                {activeModule?.data?.videoUrl ? (
-                  <iframe
-                    src={getYouTubeEmbedUrl(activeModule.data.videoUrl)}
-                    title={activeModule.data.title}
-                    className="w-full h-full"
-                    allowFullScreen
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-white">
-                    <p>Select a module to start learning</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Module Info & Actions */}
-              {activeModule && (
-                <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div>
-                      <h2 className="text-xl font-bold text-slate-900">
-                        {activeModule.data.title}
-                      </h2>
-                      <p className="text-sm text-slate-500 mt-1">
-                        Milestone {activeMilestone + 1} • Module{" "}
-                        {activeModule.module + 1}
-                      </p>
-                    </div>
-
-                    <div className="flex flex-wrap gap-2">
-                      {moduleHasQuiz && (
-                        <Button
-                          variant={
-                            isQuizPassed(activeModule.data._id)
-                              ? "secondary"
-                              : "outline"
-                          }
-                          size="sm"
-                          onClick={() => setViewMode("quiz")}
-                        >
-                          <FileQuestion className="w-4 h-4 mr-2" />
-                          {isQuizPassed(activeModule.data._id)
-                            ? "Quiz Passed"
-                            : "Take Quiz"}
-                        </Button>
-                      )}
-
-                      <Button
-                        onClick={handleMarkComplete}
-                        disabled={isModuleCompleted(activeModule.data._id)}
-                        variant={
-                          isModuleCompleted(activeModule.data._id)
-                            ? "secondary"
-                            : "primary"
-                        }
-                        size="sm"
-                      >
-                        {isModuleCompleted(activeModule.data._id) ? (
-                          <>
-                            <CheckCircle className="w-4 h-4 mr-2" />
-                            Completed
-                          </>
-                        ) : (
-                          <>
-                            Mark Complete
-                            <ArrowRight className="w-4 h-4 ml-2" />
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-
-                  {activeModule.data.description && (
-                    <p className="mt-4 text-slate-600 text-sm">
-                      {activeModule.data.description}
-                    </p>
-                  )}
-                </div>
-              )}
+    <div className="min-h-screen bg-slate-100">
+      {/* Top Bar */}
+      <div className="bg-white border-b border-slate-200 sticky top-0 z-30">
+        <div className="flex items-center justify-between px-4 py-3">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => router.push("/dashboard")}
+              className="p-2 hover:bg-slate-100 rounded-lg text-slate-500"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <div className="hidden sm:block">
+              <h1 className="font-bold text-slate-900 truncate max-w-[300px]">
+                {course.title}
+              </h1>
+              <p className="text-xs text-slate-500">
+                {completedCount}/{totalModules} modules completed
+              </p>
             </div>
-          )}
-
-          {viewMode === "quiz" && moduleHasQuiz && (
-            <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h2 className="text-xl font-bold text-slate-900">
-                    {moduleQuiz.title || "Module Quiz"}
-                  </h2>
-                  <p className="text-sm text-slate-500">
-                    {moduleQuiz.questions.length} questions • Passing score:{" "}
-                    {moduleQuiz.passingScore}%
-                  </p>
-                </div>
-                <Button variant="ghost" onClick={() => setViewMode("video")}>
-                  Back to Video
-                </Button>
-              </div>
-
-              {quizResult ? (
-                <div
-                  className={`text-center py-8 rounded-xl ${
-                    quizResult.passed ? "bg-emerald-50" : "bg-amber-50"
-                  }`}
-                >
-                  <Trophy
-                    className={`w-16 h-16 mx-auto mb-4 ${
-                      quizResult.passed ? "text-emerald-500" : "text-amber-500"
-                    }`}
-                  />
-                  <h3 className="text-2xl font-bold">
-                    {quizResult.passed ? "Congratulations! 🎉" : "Keep Going!"}
-                  </h3>
-                  <p className="text-lg mt-2">
-                    You scored {quizResult.score}% ({quizResult.correctCount}/
-                    {quizResult.totalQuestions})
-                  </p>
-                  <p className="text-sm text-slate-500 mt-1">
-                    Passing score: {quizResult.passingScore}%
-                  </p>
-                  {!quizResult.passed && (
-                    <Button
-                      className="mt-6"
-                      onClick={() => {
-                        setQuizResult(null);
-                        setQuizAnswers({});
-                      }}
-                    >
-                      Retake Quiz
-                    </Button>
-                  )}
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  {moduleQuiz.questions.map((q, qIndex) => (
-                    <div
-                      key={qIndex}
-                      className="p-4 bg-slate-50 rounded-lg border border-slate-200"
-                    >
-                      <p className="font-medium text-slate-900 mb-3">
-                        {qIndex + 1}. {q.question}
-                      </p>
-                      <div className="space-y-2">
-                        {q.options.map((opt, optIndex) => (
-                          <label
-                            key={optIndex}
-                            className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition ${
-                              quizAnswers[qIndex] === optIndex
-                                ? "border-primary-500 bg-primary-50"
-                                : "border-slate-200 bg-white hover:bg-slate-50"
-                            }`}
-                          >
-                            <input
-                              type="radio"
-                              name={`q-${qIndex}`}
-                              checked={quizAnswers[qIndex] === optIndex}
-                              onChange={() =>
-                                setQuizAnswers((prev) => ({
-                                  ...prev,
-                                  [qIndex]: optIndex,
-                                }))
-                              }
-                              className="w-4 h-4 text-primary-600"
-                            />
-                            <span>{opt}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-
-                  <Button
-                    className="w-full"
-                    onClick={handleQuizSubmit}
-                    isLoading={quizSubmitting}
-                  >
-                    Submit Answers
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {viewMode === "assignment" && milestoneAssignment && (
-            <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h2 className="text-xl font-bold text-slate-900">
-                    {milestoneAssignment.title}
-                  </h2>
-                  <p className="text-sm text-slate-500">
-                    Milestone {activeMilestone + 1} Assignment • Max Score:{" "}
-                    {milestoneAssignment.maxScore}
-                  </p>
-                </div>
-                <Button variant="ghost" onClick={() => setViewMode("video")}>
-                  Back to Modules
-                </Button>
-              </div>
-
-              <div className="prose prose-slate max-w-none mb-6">
-                <p className="text-slate-600">
-                  {milestoneAssignment.description}
-                </p>
-                {milestoneAssignment.instructions && (
-                  <div className="mt-4 p-4 bg-slate-50 rounded-lg">
-                    <h4 className="font-medium text-slate-900 mb-2">
-                      Instructions:
-                    </h4>
-                    <p className="text-sm text-slate-600 whitespace-pre-line">
-                      {milestoneAssignment.instructions}
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Submission form or status */}
-              {(() => {
-                const submission = getAssignmentSubmission(currentMilestone._id);
-                if (submission) {
-                  return (
-                    <div
-                      className={`p-4 rounded-lg ${
-                        submission.status === "approved"
-                          ? "bg-emerald-50 border border-emerald-200"
-                          : submission.status === "rejected"
-                          ? "bg-rose-50 border border-rose-200"
-                          : "bg-amber-50 border border-amber-200"
-                      }`}
-                    >
-                      <div className="flex items-center gap-2 mb-2">
-                        {submission.status === "approved" ? (
-                          <CheckCircle className="w-5 h-5 text-emerald-600" />
-                        ) : submission.status === "rejected" ? (
-                          <AlertCircle className="w-5 h-5 text-rose-600" />
-                        ) : (
-                          <Loader2 className="w-5 h-5 text-amber-600" />
-                        )}
-                        <span className="font-medium capitalize">
-                          {submission.status}
-                        </span>
-                        {submission.score && (
-                          <span className="ml-auto font-bold">
-                            Score: {submission.score}/{milestoneAssignment.maxScore}
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-sm text-slate-600">
-                        Submitted:{" "}
-                        {new Date(submission.submittedAt).toLocaleDateString()}
-                      </p>
-                      <a
-                        href={submission.submissionUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-primary-600 hover:underline"
-                      >
-                        View Submission
-                      </a>
-                      {submission.feedback && (
-                        <p className="mt-2 text-sm bg-white p-2 rounded">
-                          <strong>Feedback:</strong> {submission.feedback}
-                        </p>
-                      )}
-                    </div>
-                  );
-                }
-
-                return (
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">
-                        Submission URL (GitHub, CodePen, etc.)
-                      </label>
-                      <input
-                        type="url"
-                        value={assignmentUrl}
-                        onChange={(e) => setAssignmentUrl(e.target.value)}
-                        placeholder="https://github.com/your-username/project"
-                        className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                      />
-                    </div>
-                    <Button
-                      onClick={handleAssignmentSubmit}
-                      isLoading={assignmentSubmitting}
-                    >
-                      <Send className="w-4 h-4 mr-2" />
-                      Submit Assignment
-                    </Button>
-                  </div>
-                );
-              })()}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Right: Sidebar - Course Content */}
-      <div className="w-full lg:w-96 flex flex-col bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        {/* Progress Header */}
-        <div className="p-4 border-b border-slate-200 bg-slate-50">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="font-bold text-slate-900">Course Content</h3>
-            <span className="text-sm font-medium text-primary-600">
-              {enrollment?.progress || 0}%
-            </span>
           </div>
-          <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+
+          {/* Progress */}
+          <div className="hidden md:flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Target className="w-4 h-4 text-primary-600" />
+              <span className="text-sm font-medium text-slate-700">
+                {enrollment?.progress || 0}% Complete
+              </span>
+            </div>
+            <div className="w-32 h-2 bg-slate-200 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-primary-500 to-primary-600 transition-all duration-500"
+                style={{ width: `${enrollment?.progress || 0}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Mobile menu button */}
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="lg:hidden p-2 hover:bg-slate-100 rounded-lg text-slate-600"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Mobile Progress */}
+        <div className="md:hidden px-4 pb-3">
+          <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
+            <span>{course.title}</span>
+            <span>{enrollment?.progress || 0}%</span>
+          </div>
+          <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
             <div
-              className="h-full bg-primary-600 transition-all duration-500"
+              className="h-full bg-primary-600 transition-all"
               style={{ width: `${enrollment?.progress || 0}%` }}
             />
           </div>
         </div>
+      </div>
 
-        {/* Milestones List */}
-        <div className="flex-1 overflow-y-auto">
-          {course.milestones?.map((milestone, mIndex) => (
-            <div key={mIndex} className="border-b border-slate-100 last:border-b-0">
-              {/* Milestone Header */}
-              <button
-                onClick={() => toggleMilestone(mIndex)}
-                className={`w-full flex items-center justify-between p-4 text-left transition-colors ${
-                  activeMilestone === mIndex
-                    ? "bg-primary-50"
-                    : "hover:bg-slate-50"
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <span
-                    className={`flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold ${
-                      activeMilestone === mIndex
-                        ? "bg-primary-600 text-white"
-                        : "bg-slate-200 text-slate-600"
-                    }`}
-                  >
-                    {mIndex + 1}
-                  </span>
-                  <div>
-                    <p className="font-medium text-slate-900 text-sm">
-                      {milestone.title}
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      {milestone.modules?.length || 0} modules
-                    </p>
-                  </div>
-                </div>
-                {expandedMilestones.includes(mIndex) ? (
-                  <ChevronUp className="w-4 h-4 text-slate-400" />
-                ) : (
-                  <ChevronDown className="w-4 h-4 text-slate-400" />
-                )}
-              </button>
+      <div className="flex">
+        {/* Sidebar Overlay (Mobile) */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
 
-              {/* Modules List */}
-              {expandedMilestones.includes(mIndex) && (
-                <div className="bg-white">
-                  {milestone.modules?.map((module, modIndex) => {
-                    const isActive =
-                      activeModule?.milestone === mIndex &&
-                      activeModule?.module === modIndex;
-                    const completed = isModuleCompleted(module._id);
-                    const quizPassed = isQuizPassed(module._id);
+        {/* Sidebar */}
+        <aside
+          className={`fixed lg:sticky top-0 lg:top-[73px] right-0 lg:right-auto h-full lg:h-[calc(100vh-73px)] w-80 bg-white border-l lg:border-l-0 lg:border-r border-slate-200 z-50 transform transition-transform duration-300 lg:translate-x-0 ${
+            sidebarOpen ? "translate-x-0" : "translate-x-full lg:translate-x-0"
+          }`}
+        >
+          {/* Sidebar Header */}
+          <div className="flex items-center justify-between p-4 border-b border-slate-200 lg:hidden">
+            <h3 className="font-bold text-slate-900">Course Content</h3>
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="p-1 hover:bg-slate-100 rounded"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
 
-                    return (
-                      <button
-                        key={modIndex}
-                        onClick={() => selectModule(mIndex, modIndex)}
-                        className={`w-full flex items-center gap-3 px-4 py-3 text-left border-l-2 transition-colors ${
-                          isActive
-                            ? "border-l-primary-600 bg-primary-50"
-                            : "border-l-transparent hover:bg-slate-50"
-                        }`}
-                      >
-                        {completed ? (
-                          <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                        ) : isActive ? (
-                          <PlayCircle className="w-4 h-4 text-primary-600 flex-shrink-0" />
-                        ) : (
-                          <Circle className="w-4 h-4 text-slate-300 flex-shrink-0" />
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <p
-                            className={`text-sm truncate ${
-                              completed
-                                ? "text-slate-500"
-                                : "text-slate-800"
-                            }`}
-                          >
-                            {module.title}
-                          </p>
-                          <div className="flex items-center gap-2 text-xs text-slate-400">
-                            <span>{module.duration || 10} min</span>
-                            {module.quiz?.questions?.length > 0 && (
-                              <span
-                                className={`flex items-center gap-0.5 ${
-                                  quizPassed
-                                    ? "text-emerald-500"
-                                    : "text-purple-500"
-                                }`}
-                              >
-                                <FileQuestion className="w-3 h-3" />
-                                {quizPassed ? "✓" : ""}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </button>
-                    );
-                  })}
+          <div className="hidden lg:block p-4 border-b border-slate-200">
+            <h3 className="font-bold text-slate-900 flex items-center gap-2">
+              <BookOpen className="w-4 h-4 text-primary-600" />
+              Course Content
+            </h3>
+          </div>
 
-                  {/* Assignment Button */}
-                  {milestone.assignment?.title && (
-                    <button
-                      onClick={() => {
-                        setActiveMilestone(mIndex);
-                        setViewMode("assignment");
-                      }}
-                      className={`w-full flex items-center gap-3 px-4 py-3 text-left bg-amber-50 border-l-2 ${
-                        viewMode === "assignment" && activeMilestone === mIndex
-                          ? "border-l-amber-500"
-                          : "border-l-transparent"
+          {/* Milestones */}
+          <div className="overflow-y-auto h-[calc(100%-60px)]">
+            {course.milestones?.map((milestone, mIndex) => (
+              <div key={mIndex} className="border-b border-slate-100">
+                {/* Milestone Header */}
+                <button
+                  onClick={() => toggleMilestone(mIndex)}
+                  className={`w-full flex items-center justify-between p-4 text-left transition ${
+                    activeMilestone === mIndex
+                      ? "bg-primary-50"
+                      : "hover:bg-slate-50"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span
+                      className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold ${
+                        activeMilestone === mIndex
+                          ? "bg-primary-600 text-white"
+                          : "bg-slate-100 text-slate-600"
                       }`}
                     >
-                      <ClipboardList className="w-4 h-4 text-amber-600 flex-shrink-0" />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-amber-900">
-                          Assignment
-                        </p>
-                        <p className="text-xs text-amber-700 truncate">
-                          {milestone.assignment.title}
-                        </p>
+                      {mIndex + 1}
+                    </span>
+                    <div>
+                      <p className="font-semibold text-slate-900 text-sm">
+                        {milestone.title}
+                      </p>
+                      <p className="text-xs text-slate-500 flex items-center gap-1">
+                        <PlayCircle className="w-3 h-3" />
+                        {milestone.modules?.length || 0} lessons
+                      </p>
+                    </div>
+                  </div>
+                  {expandedMilestones.includes(mIndex) ? (
+                    <ChevronUp className="w-4 h-4 text-slate-400" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4 text-slate-400" />
+                  )}
+                </button>
+
+                {/* Modules List */}
+                {expandedMilestones.includes(mIndex) && (
+                  <div className="bg-slate-50/50">
+                    {milestone.modules?.map((module, modIndex) => {
+                      const isActive =
+                        activeModule?.milestone === mIndex &&
+                        activeModule?.module === modIndex;
+                      const completed = isModuleCompleted(module._id);
+                      const quizPassed = isQuizPassed(module._id);
+
+                      return (
+                        <button
+                          key={modIndex}
+                          onClick={() => selectModule(mIndex, modIndex)}
+                          className={`w-full flex items-center gap-3 px-4 py-3 text-left border-l-3 transition ${
+                            isActive
+                              ? "border-l-primary-600 bg-white shadow-sm"
+                              : "border-l-transparent hover:bg-white"
+                          }`}
+                        >
+                          <div className="flex-shrink-0">
+                            {completed ? (
+                              <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center">
+                                <CheckCircle className="w-4 h-4 text-emerald-600" />
+                              </div>
+                            ) : isActive ? (
+                              <div className="w-6 h-6 rounded-full bg-primary-100 flex items-center justify-center">
+                                <PlayCircle className="w-4 h-4 text-primary-600" />
+                              </div>
+                            ) : (
+                              <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center">
+                                <Circle className="w-3 h-3 text-slate-400" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p
+                              className={`text-sm truncate ${
+                                completed
+                                  ? "text-slate-500"
+                                  : isActive
+                                  ? "text-primary-700 font-medium"
+                                  : "text-slate-700"
+                              }`}
+                            >
+                              {module.title}
+                            </p>
+                            <div className="flex items-center gap-2 text-xs text-slate-400 mt-0.5">
+                              <Clock className="w-3 h-3" />
+                              <span>{module.duration || 10} min</span>
+                              {module.quiz?.questions?.length > 0 && (
+                                <span
+                                  className={`flex items-center gap-1 ${
+                                    quizPassed
+                                      ? "text-emerald-500"
+                                      : "text-purple-500"
+                                  }`}
+                                >
+                                  <FileQuestion className="w-3 h-3" />
+                                  Quiz {quizPassed && "✓"}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+
+                    {/* Assignment */}
+                    {milestone.assignment?.title && (
+                      <button
+                        onClick={() => {
+                          setActiveMilestone(mIndex);
+                          setViewMode("assignment");
+                          setSidebarOpen(false);
+                        }}
+                        className={`w-full flex items-center gap-3 px-4 py-3 text-left bg-gradient-to-r from-amber-50 to-orange-50 border-l-3 ${
+                          viewMode === "assignment" && activeMilestone === mIndex
+                            ? "border-l-amber-500"
+                            : "border-l-transparent"
+                        }`}
+                      >
+                        <div className="w-6 h-6 rounded-full bg-amber-100 flex items-center justify-center">
+                          <ClipboardList className="w-4 h-4 text-amber-600" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-amber-900">
+                            📝 Assignment
+                          </p>
+                          <p className="text-xs text-amber-700 truncate">
+                            {milestone.assignment.title}
+                          </p>
+                        </div>
+                        {getAssignmentSubmission(milestone._id) && (
+                          <CheckCircle className="w-4 h-4 text-emerald-500" />
+                        )}
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </aside>
+
+        {/* Main Content */}
+        <main className="flex-1 p-4 lg:p-6 min-h-[calc(100vh-73px)]">
+          <div className="max-w-4xl mx-auto">
+            {/* Video Mode */}
+            {viewMode === "video" && (
+              <div className="space-y-4">
+                {/* Video Player */}
+                <div className="aspect-video w-full bg-slate-900 rounded-2xl overflow-hidden shadow-2xl">
+                  {activeModule?.data?.videoUrl ? (
+                    <iframe
+                      src={getYouTubeEmbedUrl(activeModule.data.videoUrl)}
+                      title={activeModule.data.title}
+                      className="w-full h-full"
+                      allowFullScreen
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-slate-400">
+                      <div className="text-center">
+                        <PlayCircle className="w-16 h-16 mx-auto mb-3 opacity-50" />
+                        <p>Select a lesson to start</p>
                       </div>
-                      {getAssignmentSubmission(milestone._id) && (
-                        <CheckCircle className="w-4 h-4 text-emerald-500" />
-                      )}
-                    </button>
+                    </div>
                   )}
                 </div>
-              )}
-            </div>
-          ))}
-        </div>
+
+                {/* Module Info Card */}
+                {activeModule && (
+                  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div className="p-5 md:p-6">
+                      <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                        <div>
+                          <p className="text-xs font-medium text-primary-600 uppercase tracking-wide mb-1">
+                            Milestone {activeMilestone + 1} • Lesson{" "}
+                            {activeModule.module + 1}
+                          </p>
+                          <h2 className="text-xl md:text-2xl font-bold text-slate-900">
+                            {activeModule.data.title}
+                          </h2>
+                          {activeModule.data.description && (
+                            <p className="mt-2 text-slate-600 text-sm md:text-base">
+                              {activeModule.data.description}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex flex-wrap items-center gap-3 mt-5 pt-5 border-t border-slate-100">
+                        {moduleHasQuiz && (
+                          <Button
+                            variant={
+                              isQuizPassed(activeModule.data._id)
+                                ? "secondary"
+                                : "outline"
+                            }
+                            size="sm"
+                            onClick={() => setViewMode("quiz")}
+                          >
+                            <FileQuestion className="w-4 h-4 mr-2" />
+                            {isQuizPassed(activeModule.data._id)
+                              ? "Quiz Passed ✓"
+                              : "Take Quiz"}
+                          </Button>
+                        )}
+
+                        <Button
+                          onClick={handleMarkComplete}
+                          disabled={isModuleCompleted(activeModule.data._id)}
+                          className={
+                            isModuleCompleted(activeModule.data._id)
+                              ? "bg-emerald-600 hover:bg-emerald-700"
+                              : ""
+                          }
+                        >
+                          {isModuleCompleted(activeModule.data._id) ? (
+                            <>
+                              <CheckCircle className="w-4 h-4 mr-2" />
+                              Completed
+                            </>
+                          ) : (
+                            <>
+                              Mark Complete
+                              <ArrowRight className="w-4 h-4 ml-2" />
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Quiz Mode */}
+            {viewMode === "quiz" && moduleHasQuiz && (
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="p-5 md:p-6 border-b border-slate-200 bg-gradient-to-r from-purple-50 to-indigo-50">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-xl font-bold text-slate-900">
+                        📝 {moduleQuiz.title || "Module Quiz"}
+                      </h2>
+                      <p className="text-sm text-slate-600 mt-1">
+                        {moduleQuiz.questions.length} questions • Pass mark:{" "}
+                        {moduleQuiz.passingScore}%
+                      </p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setViewMode("video")}
+                    >
+                      <ArrowLeft className="w-4 h-4 mr-1" />
+                      Back
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="p-5 md:p-6">
+                  {quizResult ? (
+                    <div
+                      className={`text-center py-10 px-6 rounded-2xl ${
+                        quizResult.passed
+                          ? "bg-gradient-to-br from-emerald-50 to-teal-50"
+                          : "bg-gradient-to-br from-amber-50 to-orange-50"
+                      }`}
+                    >
+                      <Trophy
+                        className={`w-20 h-20 mx-auto mb-4 ${
+                          quizResult.passed
+                            ? "text-emerald-500"
+                            : "text-amber-500"
+                        }`}
+                      />
+                      <h3 className="text-3xl font-bold text-slate-900">
+                        {quizResult.passed ? "Excellent! 🎉" : "Almost There!"}
+                      </h3>
+                      <p className="text-xl mt-3 text-slate-700">
+                        You scored{" "}
+                        <span className="font-bold">{quizResult.score}%</span>
+                      </p>
+                      <p className="text-slate-500 mt-1">
+                        {quizResult.correctCount}/{quizResult.totalQuestions}{" "}
+                        correct answers
+                      </p>
+                      {!quizResult.passed && (
+                        <Button
+                          className="mt-6"
+                          onClick={() => {
+                            setQuizResult(null);
+                            setQuizAnswers({});
+                          }}
+                        >
+                          Try Again
+                        </Button>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {moduleQuiz.questions.map((q, qIndex) => (
+                        <div
+                          key={qIndex}
+                          className="p-5 bg-slate-50 rounded-xl border border-slate-200"
+                        >
+                          <p className="font-semibold text-slate-900 mb-4">
+                            <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-primary-100 text-primary-700 text-sm mr-2">
+                              {qIndex + 1}
+                            </span>
+                            {q.question}
+                          </p>
+                          <div className="space-y-2">
+                            {q.options.map((opt, optIndex) => (
+                              <label
+                                key={optIndex}
+                                className={`flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                                  quizAnswers[qIndex] === optIndex
+                                    ? "border-primary-500 bg-primary-50 shadow-sm"
+                                    : "border-slate-200 bg-white hover:border-slate-300"
+                                }`}
+                              >
+                                <input
+                                  type="radio"
+                                  name={`q-${qIndex}`}
+                                  checked={quizAnswers[qIndex] === optIndex}
+                                  onChange={() =>
+                                    setQuizAnswers((prev) => ({
+                                      ...prev,
+                                      [qIndex]: optIndex,
+                                    }))
+                                  }
+                                  className="w-4 h-4 text-primary-600"
+                                />
+                                <span className="text-slate-700">{opt}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+
+                      <Button
+                        className="w-full py-3"
+                        size="lg"
+                        onClick={handleQuizSubmit}
+                        isLoading={quizSubmitting}
+                      >
+                        Submit Answers
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Assignment Mode */}
+            {viewMode === "assignment" && milestoneAssignment && (
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="p-5 md:p-6 border-b border-slate-200 bg-gradient-to-r from-amber-50 to-orange-50">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-xl font-bold text-slate-900">
+                        📋 {milestoneAssignment.title}
+                      </h2>
+                      <p className="text-sm text-slate-600 mt-1">
+                        Milestone {activeMilestone + 1} Assignment • Max Score:{" "}
+                        {milestoneAssignment.maxScore}
+                      </p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setViewMode("video")}
+                    >
+                      <ArrowLeft className="w-4 h-4 mr-1" />
+                      Back
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="p-5 md:p-6">
+                  {milestoneAssignment.description && (
+                    <p className="text-slate-600 mb-4">
+                      {milestoneAssignment.description}
+                    </p>
+                  )}
+
+                  {milestoneAssignment.instructions && (
+                    <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 mb-6">
+                      <h4 className="font-semibold text-slate-900 mb-2">
+                        📝 Instructions
+                      </h4>
+                      <p className="text-sm text-slate-600 whitespace-pre-line">
+                        {milestoneAssignment.instructions}
+                      </p>
+                    </div>
+                  )}
+
+                  {(() => {
+                    const submission = getAssignmentSubmission(
+                      currentMilestone._id
+                    );
+                    if (submission) {
+                      return (
+                        <div
+                          className={`p-5 rounded-xl border-2 ${
+                            submission.status === "approved"
+                              ? "bg-emerald-50 border-emerald-200"
+                              : submission.status === "rejected"
+                              ? "bg-rose-50 border-rose-200"
+                              : "bg-amber-50 border-amber-200"
+                          }`}
+                        >
+                          <div className="flex items-center gap-3 mb-3">
+                            {submission.status === "approved" ? (
+                              <CheckCircle className="w-6 h-6 text-emerald-600" />
+                            ) : submission.status === "rejected" ? (
+                              <AlertCircle className="w-6 h-6 text-rose-600" />
+                            ) : (
+                              <Loader2 className="w-6 h-6 text-amber-600 animate-spin" />
+                            )}
+                            <div>
+                              <span className="font-semibold capitalize text-lg">
+                                {submission.status}
+                              </span>
+                              {submission.score !== null && (
+                                <span className="ml-3 text-slate-600">
+                                  Score: {submission.score}/
+                                  {milestoneAssignment.maxScore}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <p className="text-sm text-slate-600">
+                            Submitted:{" "}
+                            {new Date(submission.submittedAt).toLocaleString()}
+                          </p>
+                          <a
+                            href={submission.submissionUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-primary-600 hover:underline mt-1 inline-block"
+                          >
+                            View your submission →
+                          </a>
+                          {submission.feedback && (
+                            <div className="mt-3 p-3 bg-white rounded-lg">
+                              <p className="text-sm">
+                                <strong>Feedback:</strong> {submission.feedback}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 mb-2">
+                            Submission URL
+                          </label>
+                          <input
+                            type="url"
+                            value={assignmentUrl}
+                            onChange={(e) => setAssignmentUrl(e.target.value)}
+                            placeholder="https://github.com/username/project"
+                            className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                          />
+                          <p className="text-xs text-slate-500 mt-1">
+                            GitHub, CodePen, Google Drive, or any public URL
+                          </p>
+                        </div>
+                        <Button
+                          onClick={handleAssignmentSubmit}
+                          isLoading={assignmentSubmitting}
+                          className="w-full"
+                        >
+                          <Send className="w-4 h-4 mr-2" />
+                          Submit Assignment
+                        </Button>
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+            )}
+          </div>
+        </main>
       </div>
     </div>
   );
