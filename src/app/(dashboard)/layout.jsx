@@ -11,6 +11,8 @@ export default function DashboardLayout({ children }) {
   const { logout, user } = useAuth();
   const router = useRouter();
 
+  console.log({ user });
+
   // Protect the route
   if (!user) {
     // TODO: use a loading spinner or server-side redirect
