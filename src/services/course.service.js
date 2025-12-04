@@ -20,4 +20,16 @@ export const courseService = {
     const response = await api.post("/courses", courseData);
     return response.data;
   },
+
+  // Update Course (Admin)
+  async updateCourse(id, courseData) {
+    const response = await api.patch(`/courses/${id}`, courseData);
+    return response.data;
+  },
+
+  // Delete Course (Admin)
+  async deleteCourse(id) {
+    const response = await api.delete(`/courses/${id}`);
+    return response.data;
+  },
 };
