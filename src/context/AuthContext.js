@@ -55,9 +55,10 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
-      {!loading && children}
-      {/* TODO: Add  loading spinner here if loading is true */}
+    <AuthContext.Provider
+      value={{ user, setUser, loading, login, register, logout }}
+    >
+      {children}
     </AuthContext.Provider>
   );
 }
