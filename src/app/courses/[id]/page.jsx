@@ -124,7 +124,7 @@ export default function CourseDetailsPage() {
           {/* --- LEFT COLUMN: Main Content --- */}
           <div className="lg:col-span-2 space-y-10">
             {/* Description */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+            <div className="rounded-2xl border border-slate-200 bg-white p-8">
               <h3 className="mb-4 text-2xl font-bold text-slate-900">
                 About this course
               </h3>
@@ -134,7 +134,7 @@ export default function CourseDetailsPage() {
             </div>
 
             {/* Syllabus */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+            <div className="rounded-2xl border border-slate-200 bg-white p-8">
               <h3 className="mb-6 text-2xl font-bold text-slate-900">
                 Course Content
               </h3>
@@ -178,7 +178,7 @@ export default function CourseDetailsPage() {
 
           {/* --- RIGHT COLUMN: Sticky Sidebar --- */}
           <div className="lg:col-span-1">
-            <div className="sticky top-24 rounded-2xl border border-slate-200 bg-white p-6 shadow-lg">
+            <div className="sticky top-24 rounded-2xl border border-slate-200 bg-white p-6">
               {/* Video Preview / Thumbnail */}
               <div className="mb-6 overflow-hidden rounded-xl bg-slate-100 aspect-video relative group">
                 <Image
