@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { LayoutDashboard, LogOut, BookOpen, User } from "lucide-react";
+import { LayoutDashboard, LogOut, BookOpen, User, ClipboardCheck } from "lucide-react";
 import Button from "@/components/ui/Button";
 
 export default function DashboardLayout({ children }) {
@@ -25,13 +25,25 @@ export default function DashboardLayout({ children }) {
     { href: "/dashboard/profile", label: "Profile", icon: User },
   ];
 
-  // Admin Link (Only visible if admin)
+  // Admin Links (Only visible if admin)
   if (user.role === "admin") {
-    navItems.push({
-      href: "/admin/courses",
-      label: "Instructor Mode",
-      icon: LayoutDashboard,
-    });
+    navItems.push(
+      {
+        href: "/admin",
+        label: "Admin Dashboard",
+        icon: LayoutDashboard,
+      },
+      {
+        href: "/admin/courses",
+        label: "Manage Courses",
+        icon: BookOpen,
+      },
+      {
+        href: "/admin/assignments",
+        label: "Review Assignments",
+        icon: ClipboardCheck,
+      }
+    );
   }
 
   return (
