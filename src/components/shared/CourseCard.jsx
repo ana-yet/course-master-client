@@ -6,14 +6,16 @@ export default function CourseCard({ course }) {
   return (
     <Link
       href={`/courses/${course._id}`}
-      className="group flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white transition-all hover:shadow-lg hover:-translate-y-1"
+      className="group flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white transition-all hover:-translate-y-1"
     >
       {/* Thumbnail */}
       <div className="relative aspect-video w-full overflow-hidden bg-slate-100">
         <Image
-          src={course.thumbnail || "https://placehold.co/600x400"}
+          src={course.thumbnail}
           alt={course.title}
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+          width={600}
+          height={400}
         />
         {/* Category Badge */}
         <div className="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-0.5 text-xs font-semibold text-primary-600 shadow-sm backdrop-blur-sm">
