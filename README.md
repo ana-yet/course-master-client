@@ -55,4 +55,4 @@ Use this test card for enrolling in paid courses:
 - **Styling:** Tailwind CSS
 - **Icons:** Lucide React
 - **HTTP Client:** Axios
-- **State/Context:** React Context API (Auth)
+- **State/Context:** React Context API
