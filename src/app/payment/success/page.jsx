@@ -9,7 +9,7 @@ import api from "@/lib/axios";
 export default function PaymentSuccessPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const sessionId = searchParams.get("session_id");
+  const sessionId = searchParams ? searchParams.get("session_id") : null;
 
   const [status, setStatus] = useState("verifying");
   const [error, setError] = useState("");
@@ -27,11 +27,16 @@ export default function PaymentSuccessPage() {
         setStatus("success");
       } catch (error) {
         setStatus("error");
-        setError(error.response?.data?.message || "Payment verification failed");
+        setError(
+          error.response?.data?.message || "Payment verification failed"
+        );
       }
     };
 
-    verifyPayment();
+    // Only run effect on client side
+    if (typeof window !== "undefined") {
+      verifyPayment();
+    }
   }, [sessionId]);
 
   if (status === "verifying") {
@@ -42,7 +47,9 @@ export default function PaymentSuccessPage() {
           <h1 className="text-2xl font-bold text-slate-900">
             Verifying Payment...
           </h1>
-          <p className="text-slate-500 mt-2">Please wait while we confirm your purchase</p>
+          <p className="text-slate-500 mt-2">
+            Please wait while we confirm your purchase
+          </p>
         </div>
       </div>
     );
@@ -82,7 +89,7 @@ export default function PaymentSuccessPage() {
           Payment Successful! 🎉
         </h1>
         <p className="text-slate-500 mb-8">
-          Congratulations! You're now enrolled. Start learning right away!
+          Congratulations! You&apos;re now enrolled. Start learning right away!
         </p>
         <div className="flex gap-4 justify-center">
           <Button variant="outline" onClick={() => router.push("/")}>
