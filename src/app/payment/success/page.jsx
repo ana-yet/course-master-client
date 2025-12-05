@@ -1,15 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { CheckCircle, Loader2, XCircle } from "lucide-react";
 import Button from "@/components/ui/Button";
 import api from "@/lib/axios";
 
-export default function PaymentSuccessPage() {
+export default function PaymentSuccessPage({ searchParams }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const sessionId = searchParams ? searchParams.get("session_id") : null;
+  const sessionId = searchParams.session_id;
 
   const [status, setStatus] = useState("verifying");
   const [error, setError] = useState("");
@@ -33,10 +32,7 @@ export default function PaymentSuccessPage() {
       }
     };
 
-    // Only run effect on client side
-    if (typeof window !== "undefined") {
-      verifyPayment();
-    }
+    verifyPayment();
   }, [sessionId]);
 
   if (status === "verifying") {
